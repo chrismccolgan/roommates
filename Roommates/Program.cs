@@ -71,6 +71,17 @@ namespace Roommates
 
             //roommateRepo.Insert(test);
 
+
+            Console.WriteLine("----------------------------");
+            Console.WriteLine("Getting Roommate with Id 1");
+
+            Roommate singleRoommate = roommateRepo.GetById(1);
+            Console.WriteLine($"{singleRoommate.Id} {singleRoommate.FirstName} {singleRoommate.LastName} {singleRoommate.RentPortion} {singleRoommate.MoveInDate}");
+
+            singleRoommate.LastName = "Test3";
+            Console.WriteLine($"{singleRoommate.LastName} {singleRoommate.Room.Id}");
+            //roommateRepo.Update(singleRoommate);
+
             Console.WriteLine("----------------------------");
             Console.WriteLine("Getting All Roommates:");
             Console.WriteLine();
@@ -81,17 +92,6 @@ namespace Roommates
             {
                 Console.WriteLine($"{roommate.Id} {roommate.FirstName} {roommate.LastName} {roommate.RentPortion} {roommate.MoveInDate} {roommate.Room.Id} {roommate.Room.Name}");
             }
-
-            Console.WriteLine("----------------------------");
-            Console.WriteLine("Getting Roommate with Id 1");
-
-            Roommate singleRoommate = roommateRepo.GetById(1);
-            Console.WriteLine($"{singleRoommate.Id} {singleRoommate.FirstName} {singleRoommate.LastName} {singleRoommate.RentPortion} {singleRoommate.MoveInDate}");
-
-            singleRoommate.LastName = "NewLastName";
-            Console.WriteLine($"{singleRoommate.LastName}");
-
-            //roommateRepo.Update(singleRoommate);
 
             //roommateRepo.Delete(4);
         }
