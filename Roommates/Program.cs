@@ -88,11 +88,12 @@ namespace Roommates
             Roommate singleRoommate = roommateRepo.GetById(1);
             Console.WriteLine($"{singleRoommate.Id} {singleRoommate.FirstName} {singleRoommate.LastName} {singleRoommate.RentPortion} {singleRoommate.MoveInDate}");
 
-            //singleRoommate.LastName = ("NewLastName");
+            singleRoommate.LastName = "NewLastName";
+            Console.WriteLine($"{singleRoommate.LastName}");
+
             //roommateRepo.Update(singleRoommate);
 
             //roommateRepo.Delete(4);
-
         }
     }
 }
