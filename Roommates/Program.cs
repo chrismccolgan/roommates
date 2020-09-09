@@ -59,22 +59,40 @@ namespace Roommates
 
 
             RoommateRepository roommateRepo = new RoommateRepository(CONNECTION_STRING);
+
+            //Roommate test = new Roommate()
+            //{
+            //    FirstName = "Chris",
+            //    LastName = "Test",
+            //    RentPortion = 100,
+            //    MoveInDate = DateTime.Now,
+            //    Room = singleRoom
+            //};
+
+            //roommateRepo.Insert(test);
+
             Console.WriteLine("----------------------------");
             Console.WriteLine("Getting All Roommates:");
             Console.WriteLine();
 
-            List<Roommate> allRoommates = roommateRepo.GetAll();
+            List<Roommate> allRoommates = roommateRepo.GetAllWithRoom();
 
             foreach (Roommate roommate in allRoommates)
             {
-                Console.WriteLine($"{roommate.Id} {roommate.FirstName} {roommate.LastName} {roommate.RentPortion} {roommate.MoveInDate}");
+                Console.WriteLine($"{roommate.Id} {roommate.FirstName} {roommate.LastName} {roommate.RentPortion} {roommate.MoveInDate} {roommate.Room.Id} {roommate.Room.Name}");
             }
 
             Console.WriteLine("----------------------------");
-            Console.WriteLine("Getting Room with Id 1");
+            Console.WriteLine("Getting Roommate with Id 1");
 
             Roommate singleRoommate = roommateRepo.GetById(1);
             Console.WriteLine($"{singleRoommate.Id} {singleRoommate.FirstName} {singleRoommate.LastName} {singleRoommate.RentPortion} {singleRoommate.MoveInDate}");
+
+            //singleRoommate.LastName = ("NewLastName");
+            //roommateRepo.Update(singleRoommate);
+
+            //roommateRepo.Delete(4);
+
         }
     }
 }

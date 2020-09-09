@@ -93,6 +93,89 @@ namespace Roommates.Repositories
             }
         }
 
+        public List<Roommate> GetAllWithRoom()
+        {
+            //  We must "use" the database connection.
+            //  Because a database is a shared resource (other applications may be using it too) we must
+            //  be careful about how we interact with it. Specifically, we Open() connections when we need to
+            //  interact with the database and we Close() them when we're finished.
+            //  In C#, a "using" block ensures we correctly disconnect from a resource even if there is an error.
+            //  For database connections, this means the connection will be properly closed.
+            using (SqlConnection conn = Connection)
+            {
+                // Note, we must Open() the connection, the "using" block doesn't do that for us.
+                conn.Open();
+
+                // We must "use" commands too.
+                using (SqlCommand cmd = conn.CreateCommand())
+                {
+                    // Here we setup the command with the SQL we want to execute before we execute it.
+                    cmd.CommandText = @"SELECT rm.Id, rm.FirstName, rm.LastName, rm.RentPortion, rm.MoveInDate, rm.RoomId, r.Name, r.MaxOccupancy 
+                                        FROM Roommate rm
+                                        JOIN Room r ON r.Id = rm.RoomId";
+
+                    // Execute the SQL in the database and get a "reader" that will give us access to the data.
+                    SqlDataReader reader = cmd.ExecuteReader();
+
+                    // A list to hold the roommates we retrieve from the database.
+                    List<Roommate> roommatesWithRoom = new List<Roommate>();
+
+                    // Read() will return true if there's more data to read
+                    while (reader.Read())
+                    {
+                        // The "ordinal" is the numeric position of the column in the query results.
+                        //  For our query, "Id" has an ordinal value of 0 and "Name" is 1.
+                        int idColumnPosition = reader.GetOrdinal("Id");
+
+                        // We user the reader's GetXXX methods to get the value for a particular ordinal.
+                        int idValue = reader.GetInt32(idColumnPosition);
+
+                        int firstNameColumnPosition = reader.GetOrdinal("FirstName");
+                        string firstNameValue = reader.GetString(firstNameColumnPosition);
+
+                        int lastNameColumnPosition = reader.GetOrdinal("LastName");
+                        string lastNameValue = reader.GetString(lastNameColumnPosition);
+
+                        int rentPortionPosition = reader.GetOrdinal("RentPortion");
+                        int rentPortionValue = reader.GetInt32(rentPortionPosition);
+
+                        int moveInDatePosition = reader.GetOrdinal("MoveInDate");
+                        DateTime moveInDateValue = reader.GetDateTime(moveInDatePosition);
+
+                        int roomIdColumnPosition = reader.GetOrdinal("RoomId");
+                        int roomIdValue = reader.GetInt32(roomIdColumnPosition);
+
+                        // Now let's create a new roommate object using the data from the database.
+                        Roommate roommateWithRoom = new Roommate
+                        {
+                            Id = idValue,
+                            FirstName = firstNameValue,
+                            LastName = lastNameValue,
+                            RentPortion = rentPortionValue,
+                            MoveInDate = moveInDateValue,
+                            
+                            Room = new Room()
+                            {
+                                Id = reader.GetInt32(reader.GetOrdinal("RoomId")),
+                                Name = reader.GetString(reader.GetOrdinal("Name")),
+                                MaxOccupancy = reader.GetInt32(reader.GetOrdinal("MaxOccupancy"))
+
+                            }
+                        };
+
+                        // ...and add that roommate object to our list.
+                        roommatesWithRoom.Add(roommateWithRoom);
+                    }
+
+                    // We should Close() the reader. Unfortunately, a "using" block won't work here.
+                    reader.Close();
+
+                    // Return the list of roommates who whomever called this method.
+                    return roommatesWithRoom;
+                }
+            }
+        }
+
         /// <summary>
         ///  Returns a single roommate with the given id.
         /// </summary>
@@ -119,7 +202,7 @@ namespace Roommates.Repositories
                             LastName = reader.GetString(reader.GetOrdinal("LastName")),
                             RentPortion = reader.GetInt32(reader.GetOrdinal("RentPortion")),
                             MoveInDate = reader.GetDateTime(reader.GetOrdinal("MoveInDate")),
-                            //Room = null
+                            //roommate.Room.Id = reader.GetInt32(reader.GetOrdinal("RoomId"))
                         };
                     }
 
@@ -144,14 +227,14 @@ namespace Roommates.Repositories
                 {
                     // These SQL parameters are annoying. Why can't we use string interpolation?
                     // ... sql injection attacks!!!
-                    cmd.CommandText = @"INSERT INTO Roommate (FirstName, LastName, RentPortion, MoveInDate, Room) 
+                    cmd.CommandText = @"INSERT INTO Roommate (FirstName, LastName, RentPortion, MoveInDate, RoomId) 
                                          OUTPUT INSERTED.Id 
-                                         VALUES (@firstName, @lastName, @rentPortion, @moveInDate, @room)";
+                                         VALUES (@firstName, @lastName, @rentPortion, @moveInDate, @roomId)";
                     cmd.Parameters.AddWithValue("@firstName", roommate.FirstName);
                     cmd.Parameters.AddWithValue("@lastName", roommate.LastName);
                     cmd.Parameters.AddWithValue("@rentPortion", roommate.RentPortion);
                     cmd.Parameters.AddWithValue("@moveInDate", roommate.MoveInDate);
-                    //cmd.Parameters.AddWithValue("@room", roommate.Room);
+                    cmd.Parameters.AddWithValue("@roomId", roommate.Room.Id);
                     int id = (int)cmd.ExecuteScalar();
 
                     roommate.Id = id;
@@ -176,13 +259,13 @@ namespace Roommates.Repositories
                                         LastName = @lastName,
                                         RentPortion = @rentPortion,
                                         MoveInDate = @moveInDate
-                                        Room = @room
+                                        RoomId = @roomId
                                     WHERE Id = @id";
                     cmd.Parameters.AddWithValue("@firstName", roommate.FirstName);
                     cmd.Parameters.AddWithValue("@lastName", roommate.LastName);
                     cmd.Parameters.AddWithValue("@rentPortion", roommate.RentPortion);
                     cmd.Parameters.AddWithValue("@moveInDate", roommate.MoveInDate);
-                    //cmd.Parameters.AddWithValue("@room", roommate.Room);
+                    cmd.Parameters.AddWithValue("@room", roommate.Room.Id);
                     cmd.Parameters.AddWithValue("@id", roommate.Id);
 
                     cmd.ExecuteNonQuery();
